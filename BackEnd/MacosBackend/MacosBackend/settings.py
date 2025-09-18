@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "authentication",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -47,6 +49,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
 ROOT_URLCONF = "MacosBackend.urls"
@@ -74,8 +79,12 @@ WSGI_APPLICATION = "MacosBackend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "macracomplaintsystem",
+        "USER": "root",     
+        "PASSWORD": "12345678",
+        "HOST": "localhost",     
+        "PORT": "3307",          
     }
 }
 
@@ -120,3 +129,9 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+JWT_SECRET = "change_this_to_a_random_secret_in_production"
+JWT_ALGORITHM = "HS256"
+JWT_EXP_DELTA_SECONDS = 60*60*24  # 1 day, adjust as needed

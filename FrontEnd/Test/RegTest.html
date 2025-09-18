@@ -1,0 +1,32 @@
+<!-- register.html -->
+<form id="registerForm">
+  <input type="text" name="first_name" placeholder="First Name" required>
+  <input type="text" name="last_name" placeholder="Last Name" required>
+  <input type="email" name="email" placeholder="Email" required>
+  <input type="text" name="phone_number" placeholder="Phone Number" required>
+  <input type="password" name="password" placeholder="Password" required>
+  <select id="roles" name="role">
+    <option value="consumers">Consumers (external) - Public</option>
+    <option value="complaint_officers">Complaint Officers</option>
+    <option value="investigators_analysts">Investigators / Analysts</option>
+    <option value="supervisors_managers">Supervisors / Managers</option>
+    <option value="it_admins">IT/System Administrators</option>
+</select>
+  <button type="submit">Register</button>
+</form>
+
+<script>
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = Object.fromEntries(new FormData(e.target));
+    
+    const response = await fetch("http://127.0.0.1:8000/Auth/api/register/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(formData)
+    });
+
+    const result = await response.json();
+    alert(result.message || result.error);
+});
+</script>
