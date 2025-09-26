@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "authentication",
     "corsheaders",
+    "rest_framework",
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -135,3 +137,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 JWT_SECRET = "change_this_to_a_random_secret_in_production"
 JWT_ALGORITHM = "HS256"
 JWT_EXP_DELTA_SECONDS = 60*60*24  # 1 day, adjust as needed
+
+AUTH_USER_MODEL = 'authentication.Users'
