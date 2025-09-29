@@ -149,7 +149,9 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOW_ALL_ORIGINS = True
-ALLOWED_HOSTS= 'onrender.com'
+ALLOWED_HOSTS=  [
+    'onrender.com',
+    ]
 
 JWT_SECRET = "change_this_to_a_random_secret_in_production"
 JWT_ALGORITHM = "HS256"
