@@ -32,11 +32,13 @@ class Consumer(models.Model):
 # 3. MACRA STAFF MODEL (Subtype of Users)
 # -------------------------------------------------------
 class MacraStaff(models.Model):
+
     user = models.OneToOneField(Users, on_delete=models.CASCADE, primary_key=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     job_title = models.CharField(max_length=255, blank=True, null=True)
     department = models.CharField(max_length=255, blank=True, null=True)
     hire_date = models.DateField()
+    skills = models.CharField(max_length=255, blank=True, null=True, help_text="Comma-separated list of skills (e.g. Telecommunications, Broadcasting)")
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
