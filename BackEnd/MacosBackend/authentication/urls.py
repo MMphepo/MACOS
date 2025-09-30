@@ -17,4 +17,7 @@ urlpatterns = [
     path('auth/check-username/', views.check_username_api, name='check_username'),
     path('auth/check-email/', views.check_email_api, name='check_email'),
     path('auth/job-titles/', views.get_job_titles_api, name='job_titles'),
+
+    # Consumer API endpoint
+    path('consumers/', views.fetch_all_consumers, name='fetch_all_consumers'),
 ]
