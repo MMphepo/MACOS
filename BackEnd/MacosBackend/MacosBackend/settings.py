@@ -151,7 +151,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS=  [
     'onrender.com',
-    'macos-u5hl.onrender.com'
+    'macos-u5hl.onrender.com',
+    '127.0.0.1'
     ]
 
 JWT_SECRET = "change_this_to_a_random_secret_in_production"
