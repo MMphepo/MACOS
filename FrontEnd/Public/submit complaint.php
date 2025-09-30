@@ -56,9 +56,6 @@
       <input type="file" id="evidence" name="evidence">
       <div class="help-text">You can upload screenshots, bills, or related files.</div>
 
-      <label for="contact">Contact Details</label>
-      <input type="text" id="contact" name="contact" placeholder="Your phone/email" required>
-
       <div class="checkbox">
         <input type="checkbox" id="confirm" required>
         <label for="confirm">I confirm my details are correct</label>
@@ -75,7 +72,6 @@
     <p>🏢 Address: MACRA House, Salmin Armour Road, Blantyre, Malawi</p>
     <p class="copy">© 2025 MACRA. All Rights Reserved.</p>
   </footer>
-
-  <script src="submit complaint.js"></script>
+ <script src="submitcomplaint.js"></script>
 </body>
 </html>
