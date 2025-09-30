@@ -20,4 +20,6 @@ urlpatterns = [
 
     # Consumer API endpoint
     path('consumers/', views.fetch_all_consumers, name='fetch_all_consumers'),
+    # Investigator API endpoint
+    path('investigators/', views.fetch_all_investigators, name='fetch_all_investigators'),
 ]

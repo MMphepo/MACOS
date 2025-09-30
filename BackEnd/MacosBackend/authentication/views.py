@@ -1,3 +1,28 @@
+from .models import MacraStaff
+
+# Fetch all investigators (MacraStaff)
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def fetch_all_investigators(request):
+    investigators = MacraStaff.objects.select_related('user').all()
+    data = [
+        {
+            'id': staff.user.id,
+            'username': staff.user.username,
+            'email': staff.user.email,
+            'first_name': staff.user.first_name,
+            'last_name': staff.user.last_name,
+            'phone_number': staff.phone_number,
+            'job_title': staff.job_title,
+            'department': staff.department,
+            'hire_date': staff.hire_date,
+            'skills': staff.skills,
+        }
+        for staff in investigators
+    ]
+    return Response({'success': True, 'investigators': data})
 # Fetch all consumers
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
