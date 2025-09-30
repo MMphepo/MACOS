@@ -1,8 +1,72 @@
-from .models import MacraStaff
-
-# Fetch all investigators (MacraStaff)
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import MacraStaff, Users, Consumer, Complaint, MacraStaff
+
+# -------------------------------------------------------
+# ASSIGN TASK TO STAFF ENDPOINT
+# -------------------------------------------------------
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def assign_task_to_staff_api(request):
+    """
+    Assign a complaint (task) to a specific staff member.
+    Expects JSON: {"complaint_id": int, "staff_id": int}
+    """
+    data = request.data
+    complaint_id = data.get("complaint_id")
+    staff_id = data.get("staff_id")
+    if not complaint_id or not staff_id:
+        return Response({
+            "success": False,
+            "message": "Both complaint_id and staff_id are required."
+        }, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        complaint = Complaint.objects.get(pk=complaint_id)
+        staff = MacraStaff.objects.get(pk=staff_id)
+        complaint.assigned_staff = staff
+        complaint.save()
+        return Response({
+            "success": True,
+            "message": f"Complaint {complaint_id} assigned to staff {staff_id}."
+        }, status=status.HTTP_200_OK)
+    except Complaint.DoesNotExist:
+        return Response({
+            "success": False,
+            "message": "Complaint not found."
+        }, status=status.HTTP_404_NOT_FOUND)
+    except MacraStaff.DoesNotExist:
+        return Response({
+            "success": False,
+            "message": "Staff not found."
+        }, status=status.HTTP_404_NOT_FOUND)
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from .models import Complaint
+# -------------------------------------------------------
+# INVESTIGATOR WORKLOAD ENDPOINT
+# -------------------------------------------------------
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def investigator_workload_api(request, investigator_id):
+    """
+    Returns the number of complaints assigned to a specific investigator (MacraStaff).
+    """
+    try:
+        staff = MacraStaff.objects.get(pk=investigator_id)
+        workload = staff.assigned_complaints.count()
+        return Response({
+            "success": True,
+            "investigator_id": investigator_id,
+            "workload": workload
+        }, status=status.HTTP_200_OK)
+    except MacraStaff.DoesNotExist:
+        return Response({
+            "success": False,
+            "message": "Investigator not found."
+        }, status=status.HTTP_404_NOT_FOUND)
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def fetch_all_investigators(request):
@@ -23,10 +87,10 @@ def fetch_all_investigators(request):
         for staff in investigators
     ]
     return Response({'success': True, 'investigators': data})
+
 # Fetch all consumers
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
-from .models import Consumer
 
 @require_GET
 def fetch_all_consumers(request):
@@ -49,19 +113,13 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.utils.decorators import method_decorator
 from django.views import View
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .models import Users, Consumer, MacraStaff
 import json
 from datetime import datetime
 

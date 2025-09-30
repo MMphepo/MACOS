@@ -22,4 +22,8 @@ urlpatterns = [
     path('consumers/', views.fetch_all_consumers, name='fetch_all_consumers'),
     # Investigator API endpoint
     path('investigators/', views.fetch_all_investigators, name='fetch_all_investigators'),
+
+    # Workload and task assignment endpoints
+    path('investigators/<int:investigator_id>/workload/', views.investigator_workload_api, name='investigator_workload'),
+    path('assign-task/', views.assign_task_to_staff_api, name='assign_task_to_staff'),
 ]

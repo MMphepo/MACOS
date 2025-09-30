@@ -210,12 +210,36 @@
       }
     }
 
-    const investigators = [
-      {id:'INV-01', name:'Investigator A', skill:'Telecommunications', workload:5, available:true},
-      {id:'INV-02', name:'Investigator B', skill:'Broadcasting', workload:2, available:true},
-      {id:'INV-03', name:'Investigator C', skill:'Telecommunications', workload:8, available:false},
-      {id:'INV-04', name:'Investigator D', skill:'Telecommunications', workload:1, available:true}
-    ];
+    // Investigators will be fetched from API
+    let investigators = [];
+
+    async function fetchInvestigators() {
+      try {
+        const response = await fetch('https://macos-u5hl.onrender.com/Auth/investigators/');
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          investigators = data.map(inv => ({
+            id: inv.id ? `INV-${String(inv.id).padStart(2, '0')}` : '',
+            name: inv.name || inv.username || '',
+            skill: inv.skills || '',
+            workload: inv.workload !== undefined ? inv.workload : 0,
+            available: inv.available !== undefined ? inv.available : true
+          }));
+        } else if (Array.isArray(data.investigators)) {
+          investigators = data.investigators.map(inv => ({
+            id: inv.id ? `INV-${String(inv.id).padStart(2, '0')}` : '',
+            name: inv.name || inv.username || '',
+            skill: inv.skills || '',
+            workload: inv.workload !== undefined ? inv.workload : 0,
+            available: inv.available !== undefined ? inv.available : true
+          }));
+        } else {
+          investigators = [];
+        }
+      } catch (e) {
+        investigators = [];
+      }
+    }
 
     // State
     let activeComplaint = null;
@@ -351,13 +375,23 @@
 
     function renderInvestigators(){
       invList.innerHTML='';
+      if (!investigators.length) {
+        invList.innerHTML = '<div class="note">No investigators found.</div>';
+        return;
+      }
       investigators.forEach(inv=>{
         const row=document.createElement('div');
         row.className='inv-row';
+        // Show skills as badges if comma-separated
+        let skillsHtml = '';
+        if (inv.skill && typeof inv.skill === 'string') {
+          const skillsArr = inv.skill.split(',').map(s=>s.trim()).filter(Boolean);
+          skillsHtml = skillsArr.map(skill => `<span class='badge' style='margin-right:4px;'>${skill}</span>`).join(' ');
+        }
         row.innerHTML = `
           <div style='flex:1'>
             <strong>${inv.name}</strong>
-            <div class='meta'>${inv.skill} • ${inv.available ? 'Available' : 'Unavailable'}</div>
+            <div class='meta'>${skillsHtml || '—'} • ${inv.available ? 'Available' : 'Unavailable'}</div>
           </div>
           <div style='width:140px;text-align:right'>
             <div class='meta'>Workload</div>
@@ -374,7 +408,7 @@
         const invId = e.currentTarget.getAttribute('data-id');
         const inv = investigators.find(x=>x.id===invId);
         // confirmation
-        const ok = confirm(`Assign ${activeComplaint.id} to ${inv.name}?\n\nSkill: ${inv.skill}\nWorkload: ${inv.workload}`);
+        const ok = confirm(`Assign ${activeComplaint.id} to ${inv.name}?\n\nSkills: ${inv.skill}\nWorkload: ${inv.workload}`);
         if(!ok) return;
         // simulate server check
         await new Promise(r=>setTimeout(r,500));
@@ -405,7 +439,12 @@
 
     // initial render
   // Fetch and render on load
-  fetchComplaints().then(renderList);
+  Promise.all([
+    fetchComplaints(),
+    fetchInvestigators()
+  ]).then(() => {
+    renderList();
+  });
   </script>
 </body>
 </html>
