@@ -1,3 +1,25 @@
+# Fetch all consumers
+from django.views.decorators.http import require_GET
+from django.http import JsonResponse
+from .models import Consumer
+
+@require_GET
+def fetch_all_consumers(request):
+    consumers = Consumer.objects.select_related('user').all()
+    data = [
+        {
+            'id': c.user.id,
+            'username': c.user.username,
+            'email': c.user.email,
+            'first_name': c.user.first_name,
+            'last_name': c.user.last_name,
+            'phone_number': c.phone_number,
+            'address': c.address,
+            'registration_date': c.registration_date,
+        }
+        for c in consumers
+    ]
+    return JsonResponse({'success': True, 'consumers': data})
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
