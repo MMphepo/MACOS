@@ -8,7 +8,7 @@ from .models import MacraStaff, Users, Consumer, Complaint, MacraStaff
 # ASSIGN TASK TO STAFF ENDPOINT
 # -------------------------------------------------------
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def assign_task_to_staff_api(request):
     """
     Assign a complaint (task) to a specific staff member.
@@ -48,7 +48,7 @@ from .models import Complaint
 # INVESTIGATOR WORKLOAD ENDPOINT
 # -------------------------------------------------------
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def investigator_workload_api(request, investigator_id):
     """
     Returns the number of complaints assigned to a specific investigator (MacraStaff).
