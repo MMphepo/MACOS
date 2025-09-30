@@ -407,20 +407,51 @@
       document.querySelectorAll('.assignNow').forEach(btn=>btn.addEventListener('click', async (e)=>{
         const invId = e.currentTarget.getAttribute('data-id');
         const inv = investigators.find(x=>x.id===invId);
+        if (!activeComplaint) return;
         // confirmation
         const ok = confirm(`Assign ${activeComplaint.id} to ${inv.name}?\n\nSkills: ${inv.skill}\nWorkload: ${inv.workload}`);
         if(!ok) return;
-        // simulate server check
-        await new Promise(r=>setTimeout(r,500));
-        if(!inv.available){ showToast('Investigator unavailable', 'error'); return; }
-        // assign
-        inv.workload += 1;
-        activeComplaint.status='Assigned';
-        activeComplaint.assignedTo=inv.name;
-        showToast(`Assigned to ${inv.name}`, 'success');
-        closeModal();
-        renderList();
-        selectComplaint(activeComplaint.id);
+        // Call backend assign-task endpoint
+        try {
+          // Extract numeric IDs if needed
+          const staffId = inv.id.replace(/[^\d]/g, '');
+          const complaintId = activeComplaint.id.replace(/[^\d]/g, '');
+          const assignRes = await fetch('https://macos-u5hl.onrender.com/Auth/assign-task/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token ' + getAuthToken(),
+            },
+            body: JSON.stringify({
+              complaint_id: complaintId,
+              staff_id: staffId
+            })
+          });
+          const assignData = await assignRes.json();
+          if (!assignData.success) {
+            showToast(assignData.message || 'Assignment failed', 'error');
+            return;
+          }
+          // Fetch updated workload
+          const workloadRes = await fetch(`https://macos-u5hl.onrender.com/Auth/investigators/${staffId}/workload/`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token ' + getAuthToken(),
+            }
+          });
+          const workloadData = await workloadRes.json();
+          if (typeof workloadData.workload === 'number') {
+            inv.workload = workloadData.workload;
+          }
+          activeComplaint.status = 'Assigned';
+          activeComplaint.assignedTo = inv.name;
+          showToast(`Assigned to ${inv.name}`, 'success');
+          closeModal();
+          renderList();
+          selectComplaint(activeComplaint.id);
+        } catch (err) {
+          showToast('Network or server error', 'error');
+        }
       }));
     }
 
@@ -436,6 +467,11 @@
     document.getElementById('searchInput').addEventListener('input', ()=>renderList());
     document.getElementById('typeFilter').addEventListener('change', ()=>renderList());
     document.getElementById('severityFilter').addEventListener('change', ()=>renderList());
+
+    // Utility: Get auth token from localStorage (or other storage)
+    function getAuthToken() {
+      return localStorage.getItem('authToken') || '';
+    }
 
     // initial render
   // Fetch and render on load
