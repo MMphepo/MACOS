@@ -18,29 +18,38 @@ def assign_task_to_staff_api(request):
     Assign a complaint (task) to a specific staff member.
     Expects JSON: {"complaint_id": int, "staff_id": int}
     """
+    print("[DEBUG] assign_task_to_staff_api called")
     data = request.data
+    print(f"[DEBUG] Incoming data: {data}")
     complaint_id = data.get("complaint_id")
     staff_id = data.get("staff_id")
+    print(f"[DEBUG] complaint_id: {complaint_id}, staff_id: {staff_id}")
     if not complaint_id or not staff_id:
+        print("[DEBUG] Missing complaint_id or staff_id")
         return Response({
             "success": False,
             "message": "Both complaint_id and staff_id are required."
         }, status=status.HTTP_400_BAD_REQUEST)
     try:
         complaint = Complaint.objects.get(pk=complaint_id)
+        print(f"[DEBUG] Found complaint: {complaint}")
         staff = MacraStaff.objects.get(pk=staff_id)
+        print(f"[DEBUG] Found staff: {staff}")
         complaint.assigned_staff = staff
         complaint.save()
+        print(f"[DEBUG] Assigned complaint {complaint_id} to staff {staff_id}")
         return Response({
             "success": True,
             "message": f"Complaint {complaint_id} assigned to staff {staff_id}."
         }, status=status.HTTP_200_OK)
     except Complaint.DoesNotExist:
+        print(f"[DEBUG] Complaint with id {complaint_id} not found")
         return Response({
             "success": False,
             "message": "Complaint not found."
         }, status=status.HTTP_404_NOT_FOUND)
     except MacraStaff.DoesNotExist:
+        print(f"[DEBUG] Staff with id {staff_id} not found")
         return Response({
             "success": False,
             "message": "Staff not found."
