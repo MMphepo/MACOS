@@ -192,7 +192,7 @@
         const data = await response.json();
         if (data.success && Array.isArray(data.complaints)) {
           complaints = data.complaints.map(c => ({
-            id: c.id ? `C-${new Date(c.complaint_date).getFullYear()}-${String(c.id).padStart(3, '0')}` : '',
+            id: c.id || '', // Use the raw database id for assignment and reference
             name: c.consumer || '',
             date: c.complaint_date || '',
             status: c.status || '',
