@@ -34,8 +34,8 @@ class Command(BaseCommand):
                 provider_name=name,
                 contact_person=fake.name(),
                 contact_email=fake.email(),
-                contact_phone=fake.phone_number(),
-                license_number=fake.unique.bothify(text='LIC####'),
+                contact_phone=fake.phone_number()[:20],
+                license_number=fake.unique.bothify(text='LIC####')[:20],
             )
             providers.append(provider)
 
@@ -54,8 +54,9 @@ class Command(BaseCommand):
         # Create 10 Consumers
         consumers = []
         for i in range(10):
+            username = fake.unique.user_name()[:20]
             user = Users.objects.create_user(
-                username=fake.unique.user_name(),
+                username=username,
                 email=fake.unique.email(),
                 password='password123',
                 first_name=fake.first_name(),
@@ -64,15 +65,16 @@ class Command(BaseCommand):
             )
             consumer = Consumer.objects.create(
                 user=user,
-                phone_number=fake.phone_number(),
+                phone_number=fake.phone_number()[:20],
                 address=fake.address(),
             )
             consumers.append(consumer)
 
         # Create 1 Macra Staff for each job title
         for job_title in job_titles:
+            username = fake.unique.user_name()[:20]
             user = Users.objects.create_user(
-                username=fake.unique.user_name(),
+                username=username,
                 email=fake.unique.email(),
                 password='password123',
                 first_name=fake.first_name(),
@@ -81,7 +83,7 @@ class Command(BaseCommand):
             )
             MacraStaff.objects.create(
                 user=user,
-                phone_number=fake.phone_number(),
+                phone_number=fake.phone_number()[:20],
                 job_title=job_title,
                 department=fake.word(),
                 hire_date=fake.date_between(start_date='-10y', end_date='today'),
