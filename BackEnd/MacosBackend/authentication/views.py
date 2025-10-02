@@ -3,6 +3,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .models import MacraStaff, Users, Consumer, Complaint, MacraStaff
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from .models import Complaint
 
 # -------------------------------------------------------
 # ASSIGN TASK TO STAFF ENDPOINT
@@ -10,6 +13,7 @@ from .models import MacraStaff, Users, Consumer, Complaint, MacraStaff
 @api_view(["POST"])
 # @permission_classes([IsAuthenticated])
 def assign_task_to_staff_api(request):
+    
     """
     Assign a complaint (task) to a specific staff member.
     Expects JSON: {"complaint_id": int, "staff_id": int}
@@ -41,9 +45,7 @@ def assign_task_to_staff_api(request):
             "success": False,
             "message": "Staff not found."
         }, status=status.HTTP_404_NOT_FOUND)
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from .models import Complaint
+
 # -------------------------------------------------------
 # INVESTIGATOR WORKLOAD ENDPOINT
 # -------------------------------------------------------
