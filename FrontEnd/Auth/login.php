@@ -104,12 +104,43 @@
                 if (response.ok && data.success) {
                     messageDiv.textContent = data.message || 'Login successful!';
                     messageDiv.classList.add('success');
-                    // Store token in localStorage for session management
                     if (data.data && data.data.token) {
                         localStorage.setItem('macos_token', data.data.token);
                         localStorage.setItem('macos_user', JSON.stringify(data.data.user));
-                        // Redirect to complaint portal after login
-                        window.location.href = '../Public/Complaint Portal.php';
+                        // Check for staff id and job title
+                        const user = data.data.user;
+                        if (!user.staff_id) {
+                            // No MacraStaff id, redirect to complaint portal
+                            window.location.href = '../Public/Complaint Portal.php';
+                            return;
+                        }
+                        // Fetch job title for this staff id
+                        fetch(`https://macos-u5hl.onrender.com/Auth/staff/${user.staff_id}/job-title/`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${data.data.token}`
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(jobData => {
+                            if (jobData.success && jobData.job_title) {
+                                const jt = jobData.job_title.trim();
+                                if (jt === 'Senior Consumer Affairs Officer' || jt === 'Consumer Affairs Manager') {
+                                    window.location.href = '../Private/ConsAffoff.php';
+                                } else if (jt === 'Investigator' || jt === 'Investigation Officer') {
+                                    window.location.href = '../Private/investigator.php';
+                                } else {
+                                    // Default fallback
+                                    window.location.href = '../Public/Complaint Portal.php';
+                                }
+                            } else {
+                                // If no job title, fallback
+                                window.location.href = '../Public/Complaint Portal.php';
+                            }
+                        })
+                        .catch(() => {
+                            window.location.href = '../Public/Complaint Portal.php';
+                        });
                     }
                 } else {
                     let errorMsg = data.message || 'Login failed.';
