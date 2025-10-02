@@ -11,10 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from supabase import create_client, Client
 
-SUPABASE_URL = "https://wtsojxyaepzqzvbhfxah.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0c29qeHlhZXB6cXp2YmhmeGFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MDE0NDUsImV4cCI6MjA3NDk3NzQ0NX0.RuYfqIeay_BRpMg8cLgIMOM83L_6FPdENPvxVWLTBaA"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
