@@ -193,7 +193,10 @@
             provider: c.provider || '',
             category: c.category || '',
             assignedTo: c.assigned_staff || '',
-            attachments: Array.isArray(c.attachments) ? c.attachments : []
+            attachments: Array.isArray(c.attachments) ? c.attachments.map(att => ({
+              ...att,
+              url: att.url && !/^https?:\/\//.test(att.url) ? `https://macos-u5hl.onrender.com${att.url.startsWith('/') ? '' : '/'}${att.url}` : att.url
+            })) : []
           }));
         } else {
           complaints = [];
@@ -288,21 +291,10 @@
           dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
-        // Attachments section (show images and links)
+        // Show only number of attachments in the list
         let imagesSection = '';
         if (Array.isArray(c.attachments) && c.attachments.length > 0) {
-          imagesSection = `<div style=\"margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;\">` +
-            c.attachments.map(att => {
-              // Show image preview for images, link for others
-              const ext = att.file_name.split('.').pop().toLowerCase();
-              const isImg = ['jpg','jpeg','png','gif','bmp','webp'].includes(ext);
-              if (isImg) {
-                return `<a href=\"${att.url}\" target=\"_blank\"><img src=\"${att.url}\" alt=\"attachment\" title=\"${att.file_name}\" style=\"width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e6e9ef;box-shadow:0 1px 2px rgba(0,0,0,0.04);\"></a>`;
-              } else {
-                return `<a href=\"${att.url}\" target=\"_blank\" style=\"display:inline-block;padding:2px 8px;background:#eef2ff;border-radius:6px;font-size:12px;margin-right:4px;\">${att.file_name}</a>`;
-              }
-            }).join('') +
-            `</div>`;
+          imagesSection = `<span class='meta' style='margin-top:4px;'>${c.attachments.length} attachment${c.attachments.length > 1 ? 's' : ''}</span>`;
         }
         wrapper.innerHTML = `
           <div style=\"display:flex;justify-content:space-between;align-items:flex-start;\">
@@ -329,9 +321,37 @@
       detailTitle.textContent = `${activeComplaint.id} — ${activeComplaint.name}`;
       detailMeta.textContent = `Submitted: ${activeComplaint.date} • Status: ${activeComplaint.status}`;
       complaintDesc.value = activeComplaint.desc;
-  document.getElementById('categoryDisplay').value = activeComplaint.category || '';
+      document.getElementById('categoryDisplay').value = activeComplaint.category || '';
       severitySelect.value = activeComplaint.severity || '';
       notesEl.value = activeComplaint.notes || '';
+
+      // Show attachments in details section
+      let attSection = '';
+      if (Array.isArray(activeComplaint.attachments) && activeComplaint.attachments.length > 0) {
+        attSection = `<div style='margin:10px 0 0 0;'><strong>Attachments:</strong><div style='margin-top:7px;display:flex;gap:8px;flex-wrap:wrap;'>` +
+          activeComplaint.attachments.map(att => {
+            const ext = att.file_name.split('.').pop().toLowerCase();
+            const isImg = ['jpg','jpeg','png','gif','bmp','webp'].includes(ext);
+            if (isImg) {
+              return `<a href='${att.url}' target='_blank'><img src='${att.url}' alt='attachment' title='${att.file_name}' style='width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e6e9ef;box-shadow:0 1px 2px rgba(0,0,0,0.04);'></a>`;
+            } else {
+              return `<a href='${att.url}' target='_blank' style='display:inline-block;padding:4px 12px;background:#eef2ff;border-radius:8px;font-size:13px;margin-right:6px;'>${att.file_name}</a>`;
+            }
+          }).join('') +
+          `</div></div>`;
+      }
+      // Insert or update attachments section in details
+      let detailsBody = document.querySelector('.details .body');
+      if (detailsBody) {
+        let attDiv = detailsBody.querySelector('#attachmentsSection');
+        if (!attDiv) {
+          attDiv = document.createElement('div');
+          attDiv.id = 'attachmentsSection';
+          detailsBody.appendChild(attDiv);
+        }
+        attDiv.innerHTML = attSection;
+      }
+
       // enable controls
       [complaintDesc, categorySelect, severitySelect, notesEl, saveBtn, saveCatBtn, assignBtn, document.getElementById('clearBtn')].forEach(el=>el.disabled=false);
     }
