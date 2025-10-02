@@ -124,7 +124,7 @@
                         .then(res => res.json())
                         .then(jobData => {
                             if (jobData.success && jobData.job_title) {
-                                const jt = jobData.job_title.trim();
+                                const jt = jobData.job_title;
                                 if (jt === 'Senior Consumer Affairs Officer' || jt === 'Consumer Affairs Manager') {
                                     window.location.href = '../Private/ConsAffoff.php';
                                 } else if (jt === 'Investigator' || jt === 'Investigation Officer') {
