@@ -1,6 +1,41 @@
+# Fetch all complaints assigned to a specific investigator (MacraStaff)
+from django.views.decorators.http import require_GET
+@require_GET
+def fetch_investigator_complaints(request, staff_id):
+    try:
+        staff = MacraStaff.objects.get(pk=staff_id)
+        complaints = staff.assigned_complaints.all()
+        data = []
+        for c in complaints:
+            attachments = []
+            if hasattr(c, 'attachments'):
+                for att in c.attachments.all():
+                    attachments.append({
+                        'file_name': att.file_name,
+                        'url': att.file.url if hasattr(att.file, 'url') else ''
+                    })
+            data.append({
+                'id': c.id,
+                'consumer': c.consumer.user.username,
+                'provider': c.provider.provider_name,
+                'category': c.category.category_name if c.category else None,
+                'status': c.status.status_name if c.status else None,
+                'complaint_details': c.complaint_details,
+                'complaint_date': c.complaint_date,
+                'assigned_staff': c.assigned_staff.user.username if c.assigned_staff else None,
+                'attachments': attachments
+            })
+        return JsonResponse({'success': True, 'complaints': data})
+    except MacraStaff.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Investigator not found'}, status=404)
 # Fetch complaints filed by a specific consumer (by username)
 from django.views.decorators.http import require_GET
 from authentication.models import Users
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from authentication.models import Consumer, ServiceProvider, ComplaintCategory, ComplaintStatus, Complaint, MacraStaff
+from django.utils.dateparse import parse_datetime
 
 @require_GET
 def fetch_filed_complaints(request, username):
@@ -8,8 +43,16 @@ def fetch_filed_complaints(request, username):
         user = Users.objects.get(username=username)
         consumer = Consumer.objects.get(user=user)
         complaints = Complaint.objects.filter(consumer=consumer)
-        data = [
-            {
+        data = []
+        for c in complaints:
+            attachments = []
+            if hasattr(c, 'attachments'):
+                for att in c.attachments.all():
+                    attachments.append({
+                        'file_name': att.file_name,
+                        'url': att.file.url if hasattr(att.file, 'url') else ''
+                    })
+            data.append({
                 'id': c.id,
                 'provider': c.provider.provider_name,
                 'category': c.category.category_name if c.category else None,
@@ -17,9 +60,8 @@ def fetch_filed_complaints(request, username):
                 'complaint_details': c.complaint_details,
                 'complaint_date': c.complaint_date,
                 'assigned_staff': c.assigned_staff.user.username if c.assigned_staff else None,
-            }
-            for c in complaints
-        ]
+                'attachments': attachments
+            })
         return JsonResponse({'success': True, 'complaints': data})
     except Users.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
@@ -56,8 +98,17 @@ def fetch_all_complaints(request):
         except (Users.DoesNotExist, Consumer.DoesNotExist):
             return JsonResponse({'success': False, 'error': 'Consumer not found'}, status=404)
 
-    data = [
-        {
+    data = []
+    for c in complaints:
+        # Fetch attachments for this complaint
+        attachments = []
+        if hasattr(c, 'attachments'):
+            for att in c.attachments.all():
+                attachments.append({
+                    'file_name': att.file_name,
+                    'url': att.file.url if hasattr(att.file, 'url') else ''
+                })
+        data.append({
             'id': c.id,
             'consumer': c.consumer.user.username,
             'provider': c.provider.provider_name,
@@ -66,16 +117,11 @@ def fetch_all_complaints(request):
             'complaint_details': c.complaint_details,
             'complaint_date': c.complaint_date,
             'assigned_staff': c.assigned_staff.user.username if c.assigned_staff else None,
-        }
-        for c in complaints
-    ]
+            'attachments': attachments
+        })
     return JsonResponse({'success': True, 'complaints': data})
 # complaints/views.py
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from authentication.models import Consumer, ServiceProvider, ComplaintCategory, ComplaintStatus, Complaint, MacraStaff
-from django.utils.dateparse import parse_datetime
+
 
 @csrf_exempt
 def file_complaint(request):

@@ -112,15 +112,8 @@
 
           <div class="row">
             <div class="col field">
-              <label for="categorySelect">Category</label>
-              <select id="categorySelect" disabled>
-                <option value="">-- Select category --</option>
-                <option>Billing Dispute</option>
-                <option>Network Quality Issue</option>
-                <option>Customer Service Problem</option>
-                <option>Contract Violation</option>
-                <option>Service Interruption</option>
-              </select>
+              <label for="categoryDisplay">Category</label>
+              <input id="categoryDisplay" type="text" readonly style="background:#f6f9ff;" />
             </div>
             <div class="col field">
               <label for="severitySelect">Severity</label>
@@ -192,7 +185,7 @@
         const data = await response.json();
         if (data.success && Array.isArray(data.complaints)) {
           complaints = data.complaints.map(c => ({
-            id: c.id ? `C-${new Date(c.complaint_date).getFullYear()}-${String(c.id).padStart(3, '0')}` : '',
+            id: c.id || '',
             name: c.consumer || '',
             date: c.complaint_date || '',
             status: c.status || '',
@@ -200,7 +193,10 @@
             provider: c.provider || '',
             category: c.category || '',
             assignedTo: c.assigned_staff || '',
-            images: c.images || []
+            attachments: Array.isArray(c.attachments) ? c.attachments.map(att => ({
+              ...att,
+              url: att.url && !/^https?:\/\//.test(att.url) ? `https://macos-u5hl.onrender.com${att.url.startsWith('/') ? '' : '/'}${att.url}` : att.url
+            })) : []
           }));
         } else {
           complaints = [];
@@ -295,12 +291,10 @@
           dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
-        // Images section
+        // Show only number of attachments in the list
         let imagesSection = '';
-        if (Array.isArray(c.images) && c.images.length > 0) {
-          imagesSection = `<div style=\"margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;\">` +
-            c.images.map(imgUrl => `<img src=\"${imgUrl}\" alt=\"attachment\" style=\"width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e6e9ef;box-shadow:0 1px 2px rgba(0,0,0,0.04);\">`).join('') +
-            `</div>`;
+        if (Array.isArray(c.attachments) && c.attachments.length > 0) {
+          imagesSection = `<span class='meta' style='margin-top:4px;'>${c.attachments.length} attachment${c.attachments.length > 1 ? 's' : ''}</span>`;
         }
         wrapper.innerHTML = `
           <div style=\"display:flex;justify-content:space-between;align-items:flex-start;\">
@@ -327,9 +321,37 @@
       detailTitle.textContent = `${activeComplaint.id} — ${activeComplaint.name}`;
       detailMeta.textContent = `Submitted: ${activeComplaint.date} • Status: ${activeComplaint.status}`;
       complaintDesc.value = activeComplaint.desc;
-      categorySelect.value = activeComplaint.type || '';
+      document.getElementById('categoryDisplay').value = activeComplaint.category || '';
       severitySelect.value = activeComplaint.severity || '';
       notesEl.value = activeComplaint.notes || '';
+
+      // Show attachments in details section
+      let attSection = '';
+      if (Array.isArray(activeComplaint.attachments) && activeComplaint.attachments.length > 0) {
+        attSection = `<div style='margin:10px 0 0 0;'><strong>Attachments:</strong><div style='margin-top:7px;display:flex;gap:8px;flex-wrap:wrap;'>` +
+          activeComplaint.attachments.map(att => {
+            const ext = att.file_name.split('.').pop().toLowerCase();
+            const isImg = ['jpg','jpeg','png','gif','bmp','webp'].includes(ext);
+            if (isImg) {
+              return `<a href='${att.url}' target='_blank'><img src='${att.url}' alt='attachment' title='${att.file_name}' style='width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e6e9ef;box-shadow:0 1px 2px rgba(0,0,0,0.04);'></a>`;
+            } else {
+              return `<a href='${att.url}' target='_blank' style='display:inline-block;padding:4px 12px;background:#eef2ff;border-radius:8px;font-size:13px;margin-right:6px;'>${att.file_name}</a>`;
+            }
+          }).join('') +
+          `</div></div>`;
+      }
+      // Insert or update attachments section in details
+      let detailsBody = document.querySelector('.details .body');
+      if (detailsBody) {
+        let attDiv = detailsBody.querySelector('#attachmentsSection');
+        if (!attDiv) {
+          attDiv = document.createElement('div');
+          attDiv.id = 'attachmentsSection';
+          detailsBody.appendChild(attDiv);
+        }
+        attDiv.innerHTML = attSection;
+      }
+
       // enable controls
       [complaintDesc, categorySelect, severitySelect, notesEl, saveBtn, saveCatBtn, assignBtn, document.getElementById('clearBtn')].forEach(el=>el.disabled=false);
     }
@@ -406,28 +428,38 @@
 
       document.querySelectorAll('.assignNow').forEach(btn=>btn.addEventListener('click', async (e)=>{
         const invId = e.currentTarget.getAttribute('data-id');
+        console.log('[DEBUG] Clicked assignNow button, invId:', invId);
         const inv = investigators.find(x=>x.id===invId);
-        if (!activeComplaint) return;
+        console.log('[DEBUG] Investigator object:', inv);
+        if (!activeComplaint) {
+          console.log('[DEBUG] No active complaint selected.');
+          return;
+        }
         // confirmation
         const ok = confirm(`Assign ${activeComplaint.id} to ${inv.name}?\n\nSkills: ${inv.skill}\nWorkload: ${inv.workload}`);
-        if(!ok) return;
+        if(!ok) {
+          console.log('[DEBUG] Assignment cancelled by user.');
+          return;
+        }
         // Call backend assign-task endpoint
         try {
           // Extract numeric IDs if needed
-          const staffId = inv.id.replace(/[^\d]/g, '');
-          const complaintId = activeComplaint.id.replace(/[^\d]/g, '');
+          const staffId = String(inv.id).replace(/[^\d]/g, '');
+          const complaintId = String(activeComplaint.id).replace(/[^\d]/g, '');
+          console.log('[DEBUG] Assigning complaint', complaintId, 'to staff', staffId);
           const assignRes = await fetch('https://macos-u5hl.onrender.com/Auth/assign-task/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'Token ' + getAuthToken(),
             },
             body: JSON.stringify({
               complaint_id: complaintId,
               staff_id: staffId
             })
           });
+          console.log('[DEBUG] assign-task response status:', assignRes.status);
           const assignData = await assignRes.json();
+          console.log('[DEBUG] assign-task response data:', assignData);
           if (!assignData.success) {
             showToast(assignData.message || 'Assignment failed', 'error');
             return;
@@ -439,7 +471,9 @@
               'Authorization': 'Token ' + getAuthToken(),
             }
           });
+          console.log('[DEBUG] workload response status:', workloadRes.status);
           const workloadData = await workloadRes.json();
+          console.log('[DEBUG] workload response data:', workloadData);
           if (typeof workloadData.workload === 'number') {
             inv.workload = workloadData.workload;
           }
@@ -450,6 +484,7 @@
           renderList();
           selectComplaint(activeComplaint.id);
         } catch (err) {
+          console.log('[DEBUG] Error during assignment:', err);
           showToast('Network or server error', 'error');
         }
       }));
