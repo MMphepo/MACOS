@@ -6,6 +6,23 @@ from .models import MacraStaff, Users, Consumer, Complaint, MacraStaff
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .models import Complaint
+from django.http import JsonResponse
+from authentication.models import MacraStaff
+from django.views.decorators.http import require_GET
+
+# Endpoint to check the job title of a specific MacraStaff
+@require_GET
+def check_job_title(request, staff_id):
+    try:
+        staff = MacraStaff.objects.get(pk=staff_id)
+        return JsonResponse({
+            'success': True,
+            'staff_id': staff_id,
+            'job_title': staff.job_title
+        })
+    except MacraStaff.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Staff not found'}, status=404)
+
 
 # -------------------------------------------------------
 # ASSIGN TASK TO STAFF ENDPOINT

@@ -26,4 +26,7 @@ urlpatterns = [
     # Workload and task assignment endpoints
     path('investigators/<int:investigator_id>/workload/', views.investigator_workload_api, name='investigator_workload'),
     path('assign-task/', views.assign_task_to_staff_api, name='assign_task_to_staff'),
+
+    # Endpoint to check job title of a specific MacraStaff
+    path('staff/<int:staff_id>/job-title/', views.check_job_title, name='check_job_title'),
 ]
